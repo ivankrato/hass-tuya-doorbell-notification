@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const { MD5, AES, enc, mode, pad } = require('crypto-js');
-const https = require('https');
+const http = require('http');
+require('dotenv').config()
 
 let ws;
 let pingInterval;
@@ -67,18 +68,16 @@ const notifyHass = (payload) => {
         port: endpointParts[2].split(':').length == 2 ? endpointParts[2].split(':')[1] : (endpointParts[0] == 'https:' ? 443 : 80),
         path: `/${endpointParts.slice(3, endpointParts.length).join('/')}`,
     };
-    const request = https.request(options);
+    const request = http.request(options);
     request.write(JSON.stringify(payload));
     request.end();
 }
 
 const handleMessage = (decodedMessage) => {
-    if (decodedMessage?.payload?.data?.devId == config.devId && decodedMessage?.payload?.data?.bizCode === 'event_notify') {
-        if (process.env.DEBUG) {
-            console.log(decodedMessage?.payload?.data, { messageId: decodedMessage.messageId });
-        }
-        notifyHass(decodedMessage?.payload?.data);
+    if (process.env.DEBUG) {
+        console.log(decodedMessage?.payload?.data, { messageId: decodedMessage.messageId });
     }
+    notifyHass(decodedMessage?.payload?.data);
 }
 
 const ackMessage = (ws, messageId) => {
@@ -88,7 +87,6 @@ const ackMessage = (ws, messageId) => {
 const connect = () => {
 
     const topicUrl = buildTopicUrl(config.url, config.accessId, `?${buildQuery({ subscriptionType: config.subscriptionType, ackTimeoutMillis: config.ackTimeoutMillis })}`)
-
     const password = buildPassword(config.accessId, config.accessKey);
     const username = config.accessId;
 
@@ -118,7 +116,6 @@ const connect = () => {
         handleMessage(decodedMessage);
         ackMessage(ws, decodedMessage.messageId);
     });
-    
     return ws;
 }
 
