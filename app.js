@@ -19,7 +19,7 @@ const config = {
     url: SERVERS[process.env.TUYA_REGION?.toUpperCase()],
     devId: process.env.DOORBELL_DEVICE_ID,
     hassUrl: process.env.HASS_WEBHOOK_URL,
-    subscriptionType: 'Failover',
+    subscriptionType: 'Shared',
     ackTimeoutMillis: 1000,
     isStartUp: true
 };
@@ -95,10 +95,13 @@ const connect = () => {
         headers: { username, password },
     });
 
-    ws.on('error', () => {
+    ws.on('error', (e) => {
+        if (process.env.DEBUG) {
+            console.log(e)
+        }
         clearInterval(pingInterval);
         if(config.isStartUp) {
-            connect()
+            setTimeout(connect, 10000);
         }
     });
     ws.on('open', () => {
@@ -107,7 +110,7 @@ const connect = () => {
     ws.on('close', () => {
         clearInterval(pingInterval);
         if(config.isStartUp) {
-            connect()
+            setTimeout(connect, 10000);
         }
     });
 
