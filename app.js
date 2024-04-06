@@ -105,7 +105,7 @@ const connect = () => {
         }
     });
     ws.on('open', () => {
-        pingInterval = setInterval(() => ws.ping() );
+        pingInterval = setInterval(() => ws.ping(), 10000 );
     });
     ws.on('close', () => {
         clearInterval(pingInterval);
